@@ -37,8 +37,6 @@ SPI_MAX7219_INIT:
   RET
 
 MAX7219_disp_text:
-
-send_bytes:
   ; Sending the bytes to MAX 7219 Display
   LDI   R17, 0x03       ;select digit 2
   LDI   R18, 0x0D       ;data = c
@@ -53,3 +51,20 @@ send_bytes:
   RCALL send_bytes      ;send command & data to MAX7219
   ;--------------------------------------------------------
   RET
+
+send_bytes:
+    CBI   PORTB, SS       ;enable slave device MAX7219
+    OUT   SPDR, R17       ;transmit command
+    ;--------------------------------------------------------
+ll2:IN    R19, SPSR
+    SBRS  R19, SPIF       ;wait for byte transmission
+    RJMP  ll2             ;to complete
+    ;--------------------------------------------------------
+    OUT   SPDR, R18       ;transmit data
+    ;--------------------------------------------------------
+ll3:IN    R19, SPSR
+    SBRS  R19, SPIF       ;wait for byte transmission
+    RJMP  ll3             ;to complete
+    ;--------------------------------------------------------
+    SBI   PORTB, SS       ;disable slave device MAX7219
+    RET
