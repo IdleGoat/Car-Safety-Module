@@ -5,9 +5,10 @@
 
 main:
   ; Initial staging for nanda's local repo
-  RCALL SPI_MAX_7219_INIT
+  RCALL SPI_MAX7219_INIT
+  RCALL MAX7219_disp_text
 
-SPI_MAX_7219_INIT:
+SPI_MAX7219_INIT:
   .equ  SCK, 5
   .equ  MOSI, 3
   .equ  SS, 2
@@ -35,5 +36,20 @@ SPI_MAX_7219_INIT:
   ;--------------------------------------------------------
   RET
 
+MAX7219_disp_text:
+
 send_bytes:
   ; Sending the bytes to MAX 7219 Display
+  LDI   R17, 0x03       ;select digit 2
+  LDI   R18, 0x0D       ;data = c
+  RCALL send_bytes      ;send command & data to MAX7219
+  ;--------------------------------------------------------
+  LDI   R17, 0x02       ;select digit 1
+  LDI   R18, 0x25       ;data = (paruh pertama karakter 'm')
+  RCALL send_bytes      ;send command & data to MAX7219
+  ;--------------------------------------------------------
+  LDI   R17, 0x01       ;select digit 0
+  LDI   R18, 0x25       ;data = (paruh kedua karakter 'm')
+  RCALL send_bytes      ;send command & data to MAX7219
+  ;--------------------------------------------------------
+  RET
