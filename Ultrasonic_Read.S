@@ -16,6 +16,8 @@ agn:SBI   PORTB, 1
     CBI   PORTB, 1        ;send 10us high pulse to sensor
     ;-----------------------------------------------------------
     RCALL read_distance         ;compute Echo pulse width count
+	RCALL print_result
+	RCALL print_newline
     ;-----------------------------------------------------------
 
     ;-----------------------------------------------------------
@@ -47,7 +49,7 @@ l2: IN    R21, TIFR1
     ;-----------------------------------------------------------
     LDS   R28, ICR1L      ;store count value at falling edge
     ;-----------------------------------------------------------
-    SUB   R28, R16        ;count diff R22 = R22 - R16
+    SUB   R28, R16        ;count diff R28 = R28 - R16
     OUT   TIFR1, R21      ;clear flag for next sensor reading
     RET
 
@@ -120,6 +122,26 @@ LCD_buffer:
 	LDS R27, UCSR0A
 	SBRS R27, UDRE0 ;test data buffer if data can be sent
 	RJMP LCD_buffer
+	RET
+print_result:
+	MOV R16, R28
+	RCALL ASCII_MSD ;generate ASCII of MSD of result
+	RCALL LCD_buffer ;LCD buffer ready?
+	STS UDR0, R16 ;print digit 3 of 16-bit result (MSD)
+	RCALL ASCII_LSD ;generate ASCII of LSD of result
+	RCALL LCD_buffer ;LCD buffer ready?
+	STS UDR0, R16 ;print LSD of result on serial monitor
+	RET
+print_newline:
+	RCALL LCD_buffer ;LCD buffer ready?
+	LDI R18, 32
+	STS UDR0, R18 ;print space on serial monitor
+	RCALL LCD_buffer ;LCD buffer ready?
+	LDI R18, 0x0A
+	STS UDR0, R18 ;print newline on serial monitor
+	RCALL LCD_buffer ;LCD buffer ready?
+	LDI R18, 0x0D
+	STS UDR0, R18 ;print carriage return on serial monitor
 	RET
 ;===============================================================
 delay_ms:
