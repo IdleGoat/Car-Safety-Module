@@ -44,28 +44,28 @@ BRCS fourth_condition ;Jika R19 < 100 maka jump ke fourth_condition
 
 
 fourth_condition:
-LDI R23, 0xC0 ;nyalakan empat lampu
+LDI R23, 0xC0 
 OUT PORTD, R23 ; Menjadikan PORTD sebagai output
 SBI PORTC, 0 ;Menyalakan lampu dari PC0
 SBI PORTC, 1 ;Menyalakan lampu dari PC1
 RJMP read_ADC ;Kembali ke read_ADC
 
 third_condition:
-LDI R23, 0x80 ;nyalakan tiga lampu
+LDI R23, 0x80 
 OUT PORTD, R23 ; Menjadikan PORTD sebagai output
 SBI PORTC, 0 ;Menyalakan lampu dari PC0
 SBI PORTC, 1 ;Menyalakan lampu dari PC1
 RJMP read_ADC ;Kembali ke read_ADC
 
 second_condition:
-LDI R23, 0x00 ;nyalakan dua lampu
+LDI R23, 0x00 
 OUT PORTD, R23 ; Menjadikan PORTD sebagai output
 SBI PORTC, 0 ;Menyalakan lampu dari PC0
 SBI PORTC, 1 ;Menyalakan lampu dari PC1
 RJMP read_ADC ;Kembali ke read_ADC
 
 first_condition:
-LDI R23, 0x00 ;nyalakan satu lampu
+LDI R23, 0x00 
 OUT PORTD, R23 ; Menjadikan PORTD sebagai output
 SBI PORTC, 0 ;Menyalakan lampu dari PC0
 CBI PORTC, 1 ;Mematikan lampu dari PC1
