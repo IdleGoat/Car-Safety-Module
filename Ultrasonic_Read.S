@@ -10,6 +10,7 @@ main:
 ;--------------
     SBI   DDRB, 1         ;pin PB1 as o/p (Trigger)
     CBI   DDRB, 0         ;pin PB0 as i/p (Echo)
+	RCALL init_serial
 agn:SBI   PORTB, 1
     RCALL delay_timer0
     CBI   PORTB, 1        ;send 10us high pulse to sensor
@@ -69,6 +70,57 @@ l0: IN    R20, TIFR0      ;get TIFR0 byte & check
     LDI   R20, (1<<OCF0A)
     OUT   TIFR0, R20      ;clear OCF0 flag
     RET
+;===============================================================
+; Serial
+;===============================================================
+init_serial:
+	CLR R24
+	STS UCSR0A, R24 ;clear UCSR0A register
+	STS UBRR0H, R24 ;clear UBRR0H register
+	LDI R24, 103 ;& store in UBRR0L 103 value
+	STS UBRR0L, R24 ;to set baud rate 9600
+	LDI R24, 1<<RXEN0 | 1<<TXEN0 ;enable RXB & TXB
+	STS UCSR0B, R24
+	LDI R24, 1<<UCSZ00 | 1<<UCSZ01;asynch, no parity, 1 stop, 8 bits
+	STS UCSR0C, R24
+	RET
+agn_buffer:
+	LPM R18, Z+ ;load char of string onto R18
+	CPI R18, 0 ;check if R18=0 (end of string)
+	BRNE buffer ;if yes, exit
+	RET
+buffer:
+	RCALL LCD_buffer
+	STS UDR0, R18 ;send char in R18 to serial monitor
+	RJMP agn_buffer ;loop back & get next character
+ASCII_MSD:
+	MOV R23, R16 ;save copy of result
+	ANDI R16, 0xF0 ;extract & swap high-nibble
+	SWAP R16
+	SUBI R16, -48 ;R16 = R16 - (48) = R16 + 48
+	MOV R20, R16 ;save a copy of high-byte result
+	SUBI R20, 58 ;if +ve
+	BRPL A_F_D1 ;branch & add 7 to get ASCII A to F
+	RET
+A_F_D1:
+	SUBI R16, -7 ;R16 = R16 - (7) = R16 + 7
+	RET
+ASCII_LSD:
+	MOV R16, R23 ;restore copy of result
+	ANDI R16, 0x0F ;extract low-nibble
+	SUBI R16, -48 ;R16 = R16 - (48) = R16 + 48
+	MOV R20, R16 ;save a copy of high-byte result
+	SUBI R20, 58 ;if +ve
+	BRPL A_F_D0 ;branch & add 7 to get ASCII A to F]
+	RET
+A_F_D0:
+	SUBI R16, -7 ;R16 = R16 - (7) = R16 + 7
+	RET
+LCD_buffer:
+	LDS R27, UCSR0A
+	SBRS R27, UDRE0 ;test data buffer if data can be sent
+	RJMP LCD_buffer
+	RET
 ;===============================================================
 delay_ms:
 ;--------
