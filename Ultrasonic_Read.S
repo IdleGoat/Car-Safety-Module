@@ -8,7 +8,7 @@ main:
 	RCALL SPI_MAX7219_INIT
 	RCALL MAX7219_disp_text
 	RCALL HC_SR04_INIT
-loop:
+agn:
 	SBI   PORTB, 1
     RCALL delay_timer0
     CBI   PORTB, 1        ;send 10us high pulse to sensor
@@ -141,4 +141,38 @@ dsp:MOV   R18, R27
     LDI   R17, 0x05       ;select digit 4 for LSD
     RCALL send_bytes      ;send command & data to MAX7219    
     ;--------------------------------------------------------
+    RET
+
+delay_timer0:             ;10 usec delay via Timer 0
+;------------
+    CLR   R20
+    OUT   TCNT0, R20      ;initialize timer0 with count=0
+    LDI   R20, 20
+    OUT   OCR0A, R20      ;OCR0 = 20
+    LDI   R20, 0b00001010
+    OUT   TCCR0B, R20     ;timer0: CTC mode, prescaler 8
+    ;-----------------------------------------------------------
+l0: IN    R20, TIFR0      ;get TIFR0 byte & check
+    SBRS  R20, OCF0A      ;if OCF0=1, skip next instruction
+    RJMP  l0              ;else, loop back & check OCF0 flag
+    ;-----------------------------------------------------------
+    CLR   R20
+    OUT   TCCR0B, R20     ;stop timer0
+    ;-----------------------------------------------------------
+    LDI   R20, (1<<OCF0A)
+    OUT   TIFR0, R20      ;clear OCF0 flag
+    RET
+;===============================================================
+
+delay_ms:
+;--------
+    LDI   R21, 255
+l6: LDI   R22, 255
+l7: LDI   R23, 50
+l8: DEC   R23
+    BRNE  l8
+    DEC   R22
+    BRNE  l7
+    DEC   R21
+    BRNE  l6
     RET
