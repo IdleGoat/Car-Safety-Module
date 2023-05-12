@@ -1,72 +1,57 @@
-#define __SFR_OFFSET 0x00
-#include "avr/io.h"
-.global main
+#define __SFR_OFFSET 0  
+#include "avr/io.h"  
 
-main:
-LDI R21, 0xFF
-OUT DDRD, R21 ; Menjadikan port D sebagai output
-LDI R21, 0b00000011 ; Melakukan load ke dalam R21
-OUT DDRC, R21 ; menjadikan A0 A1 sebagai output sisanya sebagai input
+.global main   
 
-LDI R21, 0b11000010 ; Melakukan load ke dalam R21
-STS ADMUX, R21 ;mengatur admux untuk menggunakan  internal 2.56V, 
-;right-justified data, dan ADC2.
-LDI R21, 0x87 ; Melakukan load ke dalam R21
-STS ADCSRA, R21 ; Mengatur ADCSRA untuk ADC Enable
+main:    
+LDI R21, 0xFF   
+OUT DDRD, R21   ; Menjadikan port D sebagai output
+OUT DDRB, R21   ; Menjadikan port B sebagai output
+CBI DDRC, 0     ; Menjadikan port A0 sebagai input
 
-read_ADC:
-LDI R21, 0xC7 ; Melakukan load ke dalam R21
-STS ADCSRA, R21 ; Mengatur ADCSRA untuk ADC Start Conversion
+LDI R20, 0xE0   ; Melakukan load ke dalam R20
+STS ADMUX, R20   ;mengatur admux untuk menggunakan  internal 2.56V, right-justified data, dan ADC2.
+LDI R20,0x87       ; Melakukan load ke dalam R20
+STS ADCSRA, R20   ; Mengatur ADCSRA untuk ADC Enable
 
-wait_ADC:
-LDS R22, ADCSRA ;Mengecek ADC Interrupt flag
-SBRS R22, 4 ;skip jump bila konversi sudah selesai atau flag sudah set
-RJMP wait_ADC ; loop sampai ADIF flag set
+LDI R20, 0xC7      ; Melakukan load ke dalam R20
+STS ADCSRA, R20   ; Mengatur ADCSRA untuk ADC Start Conversion
 
-LDI R18, 0xD7 ; Melakukan load ke R18
-STS ADCSRA, R18 ;Mengatur kembali nilai ADIF agar dapat dihapus
+read_ADC:    
+LDS R21, ADCSRA    ;Mengecek ADC Interrupt flag
+SBRS R21,4       ;skip jump bila konversi sudah selesai atau flag sudah set
+RJMP read_ADC   ; loop sampai ADIF flag set
 
-LDS R19, ADCL ; Mendapatkan hasil konversi ADC Low-byte
-LDS R20, ADCH ; Mendapatkan hasil konversi ADC High-byte
-RJMP check_LDR ; Jump ke label check_LDR
+LDI R17,0xD7   ; Melakukan load ke R17
+STS ADCSRA,R17   
 
-check_LDR:
-CPI R19, 20 ; Mengcompare R19 dengan 20
-BRCS read_ADC ;Jika R19 < 20 maka jump kembali ke read_ADC
-CPI R19, 40 ; Mengcompare R19 dengan 40
-BRCS first_condition ;Jika R19 < 40 maka jump ke first_condition
-CPI R19, 60 ; Mengcompare R19 dengan 60
-BRCS second_condition ;Jika R19 < 60 maka jump ke second_condition
-CPI R19, 80 ; Mengcompare R19 dengan 80
-BRCS third_condition ;Jika R19 < 80 maka jump ke third_condition
-CPI R19, 100 ; Mengcompare R19 dengan 100
-BRCS fourth_condition ;Jika R19 < 100 maka jump ke fourth_condition
+LDS R18,ADCL   
+LDS R19,ADCH   
+OUT PORTD,R18   
+OUT PORTB,R19   
 
+MOV R25, R19   
+SUBI R25, 128   
+BRSH third_condition   
+MOV R25,R19   
+SUBI R25, 64   
+BRSH second_condition   
+MOV R25,R19   
+SUBI R25, 32   
+BRSH first_condition
+RJMP read_ADC   
 
-fourth_condition:
-LDI R23, 0xC0 
-OUT PORTD, R23 ; Menjadikan PORTD sebagai output
-SBI PORTC, 0 ;Menyalakan lampu dari PC0
-SBI PORTC, 1 ;Menyalakan lampu dari PC1
-RJMP read_ADC ;Kembali ke read_ADC
-
-third_condition:
-LDI R23, 0x80 
-OUT PORTD, R23 ; Menjadikan PORTD sebagai output
-SBI PORTC, 0 ;Menyalakan lampu dari PC0
-SBI PORTC, 1 ;Menyalakan lampu dari PC1
-RJMP read_ADC ;Kembali ke read_ADC
+third_condition: 
+SBI PORTD, 1   
+SBI PORTD, 0   
+RJMP read_ADC   
 
 second_condition:
-LDI R23, 0x00 
-OUT PORTD, R23 ; Menjadikan PORTD sebagai output
-SBI PORTC, 0 ;Menyalakan lampu dari PC0
-SBI PORTC, 1 ;Menyalakan lampu dari PC1
-RJMP read_ADC ;Kembali ke read_ADC
+SBI PORTD, 1  
+CBI PORTD, 0  
+RJMP read_ADC  
 
 first_condition:
-LDI R23, 0x00 
-OUT PORTD, R23 ; Menjadikan PORTD sebagai output
-SBI PORTC, 0 ;Menyalakan lampu dari PC0
-CBI PORTC, 1 ;Mematikan lampu dari PC1
-RJMP read_ADC ;Kembali ke read_ADC
+CBI PORTD, 1  
+CBI PORTD, 0  
+RJMP read_ADC  
