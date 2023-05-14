@@ -7,7 +7,9 @@
 ; PD2 = Enable relay 2
 ; PD6 = PWM Output
 ; PC0 = Analog input untuk potensiometer
-; PC5 = 
+; PC5 = RED Pin LED
+; PC4 = GREEN Pin LED
+; PC3 = BLUE Pin LED
 
 main:
   ; Port D dan B sebagai output
@@ -16,10 +18,15 @@ main:
   OUT DDRB, R21       ; Menjadikan pin B sebagai output
   ; Analog input
   CBI DDRC, 0         ; Menjadikan pin A0 sebagai input analog
+  ; Output untuk RGB LED
+  SBI DDRC, 5
+  SBI DDRC, 4
+  SBI DDRC, 3
 loop:
-
-
+  RCALL INIT_ADC
+  RCALL READ_ADC
 RJMP loop ; 
+
 ;=============================================================================================
 ;ADC
 ;=============================================================================================
@@ -35,7 +42,7 @@ RET
 READ_ADC:
     LDS R21, ADCSRA   ; Load nilai dari ADCSRA ke dalam R21 dan cek ADC Interrupt flag
     SBRS R21,4        ; Skip jump bila konversi sudah selesai atau flag sudah set
-    RJMP READ_ADC     ; Loop sampai ADIF flag set
+    RJMP READ_ADC    ; Loop sampai ADIF flag set
     LDI R17, 0xD7     ; Load konstanta 0xD7 ke dalam R17
     STS ADCSRA,R17    ; Menonaktifkan ADC
     LDS R18, ADCL     ; Load nilai dari ADCL dan ADCH ke dalam R18 dan R19
@@ -57,31 +64,34 @@ HIGH_SPEED:
     ; Enable Relay 1 and 2
     CBI PORTD, 1
     CBI PORTD, 2
+
     ; PWM Value
     LDI R16, 200
     RCALL PWM
-
-    RJMP read_ADC   ; Kembali ke loop pembacaan ADC
+    
+    RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
 
 MEDIUM_SPEED:
     ; Enable Relay 1 and 2
     CBI PORTD, 1
     CBI PORTD, 2
+
     ; PWM Value
     LDI R16, 100
     RCALL PWM
 
-    RJMP read_ADC   ; Kembali ke loop pembacaan ADC
+    RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
 
 LOW_SPEED:
     ; Enable Relay 1 and 2
     CBI PORTD, 1
     CBI PORTD, 2
+
     ; PWM Value
     LDI R16, 0
     RCALL PWM
 
-    RJMP read_ADC   ; Kembali ke loop pembacaan ADC
+    RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
 ;=============================================================================================
 ;PWM
 ;=============================================================================================
