@@ -5,11 +5,13 @@
 
 main:
 	; Integrating With MAX7219 display Repo
+  SBI DDRD, 7
 	RCALL SPI_MAX7219_INIT
 	RCALL MAX7219_disp_text
 	RCALL HC_SR04_INIT
 agn:
 	SBI   PORTB, 1
+  CBI PORTD,7 
     RCALL delay_timer0
     CBI   PORTB, 1        ;send 10us high pulse to sensor
     ;-----------------------------------------------------------
@@ -21,6 +23,7 @@ agn:
     RJMP  agn
 	
   
+
  
  HC_SR04_INIT:
 ;--------------
@@ -51,9 +54,18 @@ l2: IN    R21, TIFR1
     ;-----------------------------------------------------------
     LDS   R28, ICR1L      ;store count value at falling edge
     ;-----------------------------------------------------------
-    SUB   R28, R16        ;count diff R22 = R22 - R16
+    SUB   R28, R16        ;count diff R28 = R28 - R16
     OUT   TIFR1, R21      ;clear flag for next sensor reading
+
+    CPI R28,14
+    BRGE skip
+    SBI PORTD,7
+    RCALL delay_2sec
+skip:
     RET
+
+
+
 
 SPI_MAX7219_INIT:
   .equ  SCK, 5
@@ -176,3 +188,14 @@ l8: DEC   R23
     DEC   R21
     BRNE  l6
     RET
+
+
+delay_2sec:
+    ldi r17, hi8(4000)  ; Load the high byte of the delay count
+    ldi r18, lo8(4000)  ; Load the low byte of the delay count
+delay_loop:
+    subi r18, 1        ; Decrement the low byte of the delay count
+    sbci r17, 0        ; Decrement the high byte if the low byte becomes zero
+    brne delay_loop    ; Repeat until both bytes reach zero
+
+    ret                ; Return from the subroutine
