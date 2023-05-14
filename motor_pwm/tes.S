@@ -1,18 +1,90 @@
 #define __SFR_OFFSET 0x00
 #include "avr/io.h"
+
 .global main
 
+; PD1 = Enable relay 1
+; PD2 = Enable relay 2
+; PD6 = PWM Output
+; PC0 = Analog input untuk potensiometer
+; PC5 = 
 
 main:
+  ; Port D dan B sebagai output
   LDI R21, 0xFF   
-  OUT DDRD, R21   ; Menjadikan port D sebagai output
-  OUT DDRB, R21   ; Menjadikan port B sebagai output
-  SBI PORTD,1 
-  SBI PORTD,2
+  OUT DDRD, R21       ; Menjadikan pin D sebagai output
+  OUT DDRB, R21       ; Menjadikan pin B sebagai output
+  ; Analog input
+  CBI DDRC, 0         ; Menjadikan pin A0 sebagai input analog
 loop:
 
-rjmp loop ; 
 
+RJMP loop ; 
+;=============================================================================================
+;ADC
+;=============================================================================================
+INIT_ADC:
+    LDI R20, 0xE0     ; Load konstanta 0xE0 ke dalam R20
+    STS ADMUX, R20    ; Mengatur ADMUX untuk menggunakan internal 2.56V, right-justified data, dan ADC2
+    LDI R20,0x87      ; Load konstanta 0x87 ke dalam R20
+    STS ADCSRA, R20   ; Mengatur ADCSRA untuk ADC Enable
+    LDI R20, 0xC7     ; Load konstanta 0xC7 ke dalam R20
+    STS ADCSRA, R20   ; Mengatur ADCSRA untuk ADC Start Conversion
+RET
+
+READ_ADC:
+    LDS R21, ADCSRA   ; Load nilai dari ADCSRA ke dalam R21 dan cek ADC Interrupt flag
+    SBRS R21,4        ; Skip jump bila konversi sudah selesai atau flag sudah set
+    RJMP READ_ADC     ; Loop sampai ADIF flag set
+    LDI R17, 0xD7     ; Load konstanta 0xD7 ke dalam R17
+    STS ADCSRA,R17    ; Menonaktifkan ADC
+    LDS R18, ADCL     ; Load nilai dari ADCL dan ADCH ke dalam R18 dan R19
+    LDS R19, ADCH     ; Load nilai dari ADCL dan ADCH ke dalam R18 dan R19
+
+    ; Memeriksa kondisi nilai ADC dan melakukan aksi sesuai kondisi
+    MOV R25, R19
+    SUBI R25, 128
+    BRSH HIGH_SPEED
+    MOV R25, R19
+    SUBI R25, 64
+    BRSH MEDIUM_SPEED
+    MOV R25, R19
+    SUBI R25, 32
+    BRSH LOW_SPEED
+    RJMP READ_ADC
+
+HIGH_SPEED:
+    ; Enable Relay 1 and 2
+    CBI PORTD, 1
+    CBI PORTD, 2
+    ; PWM Value
+    LDI R16, 200
+    RCALL PWM
+
+    RJMP read_ADC   ; Kembali ke loop pembacaan ADC
+
+MEDIUM_SPEED:
+    ; Enable Relay 1 and 2
+    CBI PORTD, 1
+    CBI PORTD, 2
+    ; PWM Value
+    LDI R16, 100
+    RCALL PWM
+
+    RJMP read_ADC   ; Kembali ke loop pembacaan ADC
+
+LOW_SPEED:
+    ; Enable Relay 1 and 2
+    CBI PORTD, 1
+    CBI PORTD, 2
+    ; PWM Value
+    LDI R16, 0
+    RCALL PWM
+
+    RJMP read_ADC   ; Kembali ke loop pembacaan ADC
+;=============================================================================================
+;PWM
+;=============================================================================================
 PWM:
   OUT OCR0A, R16
 
@@ -24,13 +96,3 @@ PWM:
   LDI R16, (1 << CS00)
   OUT TCCR0B, R16
   RET
-
-STOP:
-    LDI R16, 0
-    RCALL PWM
-    RET
-
-SLOW:
-    LDI R16, 50
-    RCALL PWM
-    RET  
