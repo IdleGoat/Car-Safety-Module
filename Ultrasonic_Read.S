@@ -9,20 +9,32 @@ main:
 	RCALL SPI_MAX7219_INIT
 	RCALL MAX7219_disp_text
 	RCALL HC_SR04_INIT
+  RCALL init_ADC
+
 agn:
 	SBI   PORTB, 1
   CBI PORTD,7 
-    RCALL delay_timer0
-    CBI   PORTB, 1        ;send 10us high pulse to sensor
-    ;-----------------------------------------------------------
-    RCALL echo_PW         ;compute Echo pulse width count
-    ;-----------------------------------------------------------
-    RCALL byte2decimal    ;covert & display on MAX7219
-    ;-----------------------------------------------------------
-    RCALL delay_ms
-    RJMP  agn
+  RCALL delay_timer0
+  CBI   PORTB, 1        ;send 10us high pulse to sensor
+  ;-----------------------------------------------------------
+  RCALL read_ADC
+  ;-----------------------------------------------------------
+  RCALL echo_PW         ;compute Echo pulse width count
+  ;-----------------------------------------------------------
+  RCALL COMPARE
+  RCALL byte2decimal    ;covert & display on MAX7219
+  ;-----------------------------------------------------------
+  RCALL delay_ms
+  RJMP  agn
 	
-  
+
+COMPARE:
+    CPI R28,14
+    BRGE skip
+    SBI PORTD,7
+    RCALL delay_2sec
+skip:
+    RET  
 
  
  HC_SR04_INIT:
@@ -56,12 +68,6 @@ l2: IN    R21, TIFR1
     ;-----------------------------------------------------------
     SUB   R28, R16        ;count diff R28 = R28 - R16
     OUT   TIFR1, R21      ;clear flag for next sensor reading
-
-    CPI R28,14
-    BRGE skip
-    SBI PORTD,7
-    RCALL delay_2sec
-skip:
     RET
 
 
@@ -199,3 +205,29 @@ delay_loop:
     brne delay_loop    ; Repeat until both bytes reach zero
 
     ret                ; Return from the subroutine
+
+
+init_ADC:
+    SBI   DDRC, 0     ;set pin PC0 as i/p for ADC0
+    ;--------------------------------------------------------------
+    LDI   R20, 0xC0   ;internal 2.56V, right-justified data, ADC0
+    STS   ADMUX, R20
+    LDI   R20, 0x87   ;enable ADC, ADC prescaler CLK/128
+    STS   ADCSRA, R20
+    RET
+;------------------------------------------------------------------
+read_ADC:
+    LDI   R20, 0xC7   ;set ADSC in ADCSRA to start conversion
+    STS   ADCSRA, R20
+    ;--------------------------------------------------------------
+wait_ADC:
+    LDS   R21, ADCSRA ;check ADIF flag in ADCSRA
+    SBRS  R21, 4      ;skip jump when conversion is done (flag set)
+    RJMP  wait_ADC    ;loop until ADIF flag is set
+    ;--------------------------------------------------------------
+    LDI   R17, 0xD7   ;set ADIF flag again
+    STS   ADCSRA, R17 ;so that controller clears ADIF
+    ;--------------------------------------------------------------
+    LDS   R18, ADCL   ;get low-byte result from ADCL
+    LDS   R19, ADCH   ;get high-byte result from ADCH
+    RET
