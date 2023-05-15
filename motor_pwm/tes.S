@@ -59,7 +59,7 @@ READ_ADC:
     BRSH HIGH_SPEED
     MOV R25, R19
     SUBI R25, 64
-    BRSH MEDIUM_SPEED
+    BRSH LOW_SPEED
     MOV R25, R19
     SUBI R25, 32
     BRSH LOW_SPEED
@@ -73,15 +73,12 @@ HIGH_SPEED:
     ; PWM Value
     LDI R16, 200
     RCALL PWM
-    
-    ;LED
-    SBI PORTC, 5  ; RED
-    CBI PORTC, 4  ; GREEN
-    CBI PORTC, 3  ; BLUE
+
+    RCALL NORMAL
 
     RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
 ;---------------------------------------------------------------------------------------------
-MEDIUM_SPEED:
+LOW_SPEED:
     ; Enable Relay 1 and 2
     CBI PORTD, 1
     CBI PORTD, 2
@@ -90,14 +87,11 @@ MEDIUM_SPEED:
     LDI R16, 20
     RCALL PWM
 
-    ;LED
-    CBI PORTC, 5  ; RED
-    SBI PORTC, 4  ; GREEN
-    CBI PORTC, 3  ; BLUE
-
+    RCALL NORMAL   
+  
     RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
 ;---------------------------------------------------------------------------------------------
-LOW_SPEED:
+STOP:
     ; Enable Relay 1 and 2
     SBI PORTD, 1
     SBI PORTD, 2
@@ -106,14 +100,37 @@ LOW_SPEED:
     LDI R16, 0
     RCALL PWM
 
-    ;LED
-    CBI PORTC, 5  ; RED
-    CBI PORTC, 4  ; GREEN
-    SBI PORTC, 3  ; BLUE
+    RCALL NORMAL
+    
+    RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
+;---------------------------------------------------------------------------------------------
+STOP_EMERGENCY:
+    ; Enable Relay 1 and 2
+    SBI PORTD, 1
+    SBI PORTD, 2
 
+    ; PWM Value
+    LDI R16, 0
+    RCALL PWM
+
+    RCALL EMERGENCY_BRAKE
+    
+    RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
+;---------------------------------------------------------------------------------------------
+LOW_SPEED_WARNING_DISTANCE:
+    ; Enable Relay 1 and 2
+    CBI PORTD, 1
+    CBI PORTD, 2
+
+    ; PWM Value
+    LDI R16, 20
+    RCALL PWM
+
+    RCALL WARNING   
+  
     RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
 ;=============================================================================================
-;PWM
+; PWM
 ;=============================================================================================
 PWM:
   OUT OCR0A, R16
@@ -126,3 +143,25 @@ PWM:
   LDI R16, (1 << CS00)
   OUT TCCR0B, R16
   RET
+
+;=============================================================================================
+; LED CASE
+;=============================================================================================
+EMERGENCY_BRAKE:
+    ;LED RED
+    SBI PORTC, 5  ; RED
+    CBI PORTC, 4  ; GREEN
+    CBI PORTC, 3  ; BLUE
+    RET
+NORMAL:
+    ;LED GREEN
+    CBI PORTC, 5  ; RED
+    SBI PORTC, 4  ; GREEN
+    CBI PORTC, 3  ; BLUE
+    RET
+WARNING:
+    ;LED YELLOW
+    SBI PORTC, 5  ; RED
+    SBI PORTC, 4  ; GREEN
+    CBI PORTC, 3  ; BLUE
+    RET    
