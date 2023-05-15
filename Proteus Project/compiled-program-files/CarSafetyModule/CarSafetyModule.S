@@ -5,12 +5,12 @@
 
 main:
 	; Integrating With MAX7219 display Repo
-    SBI DDRD, 7
+  SBI DDRD, 7
 	RCALL SPI_MAX7219_INIT
 	RCALL MAX7219_disp_text
 	RCALL HC_SR04_INIT
 agn:
-	SBI   PORTB, 1
+	  SBI   PORTB, 1
     CBI PORTD,7 
     RCALL delay_timer0
     CBI   PORTB, 1        ;send 10us high pulse to sensor
@@ -96,11 +96,11 @@ MAX7219_disp_text:
   RCALL send_bytes      ;send command & data to MAX7219
   ;--------------------------------------------------------
   LDI   R17, 0x02       ;select digit 1
-  LDI   R18, 0x25       ;data = (paruh pertama karakter 'm')
+  LDI   R18, 0b00010101 ;data = (paruh pertama karakter 'm')
   RCALL send_bytes      ;send command & data to MAX7219
   ;--------------------------------------------------------
   LDI   R17, 0x01       ;select digit 0
-  LDI   R18, 0x25       ;data = (paruh kedua karakter 'm')
+  LDI   R18, 0b00010101 ;data = (paruh kedua karakter 'm')
   RCALL send_bytes      ;send command & data to MAX7219
   ;--------------------------------------------------------
   RET
