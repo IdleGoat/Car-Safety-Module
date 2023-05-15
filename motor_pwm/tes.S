@@ -62,7 +62,7 @@ READ_ADC:
     BRSH LOW_SPEED
     MOV R25, R19
     SUBI R25, 32
-    BRSH STOP
+    BRSH STOP_SPEED
     RJMP READ_ADC
 ;---------------------------------------------------------------------------------------------
 ; Kecepatan diatur oleh potensiometer
@@ -75,7 +75,7 @@ HIGH_SPEED:
     LDI R16, 200
     RCALL PWM
 
-    RCALL NORMAL
+    RCALL WARNING  ; SEMENTARA
 
     RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
 ;---------------------------------------------------------------------------------------------
@@ -89,12 +89,12 @@ LOW_SPEED:
     LDI R16, 20
     RCALL PWM
 
-    RCALL NORMAL   
+    RCALL NORMAL   ; SEMENTARA
   
     RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
 ;---------------------------------------------------------------------------------------------
 ; Kecepatan diatur oleh potensiometer ke paling rendah maka berhenti
-STOP:
+STOP_SPEED:
     ; Enable Relay 1 and 2
     SBI PORTD, 1
     SBI PORTD, 2
@@ -103,7 +103,7 @@ STOP:
     LDI R16, 0
     RCALL PWM
 
-    RCALL NORMAL
+    RCALL STOP_LED  ; SEMENTARA
     
     RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
 ;---------------------------------------------------------------------------------------------
@@ -112,6 +112,9 @@ STOP_EMERGENCY:
     ; Enable Relay 1 and 2
     SBI PORTD, 1
     SBI PORTD, 2
+
+    ; Enable Buzzer
+    SBI PORTC, 2
 
     ; PWM Value
     LDI R16, 0
@@ -126,6 +129,9 @@ LOW_SPEED_WARNING_DISTANCE:
     ; Enable Relay 1 and 2
     CBI PORTD, 1
     CBI PORTD, 2
+
+    ; Enable Buzzer
+    SBI PORTC, 2
 
     ; PWM Value
     LDI R16, 20
@@ -169,4 +175,10 @@ WARNING:
     SBI PORTC, 5  ; RED
     SBI PORTC, 4  ; GREEN
     CBI PORTC, 3  ; BLUE
+    RET    
+STOP_LED:
+    ;LED YELLOW
+    CBI PORTC, 5  ; RED
+    CBI PORTC, 4  ; GREEN
+    SBI PORTC, 3  ; BLUE
     RET    
