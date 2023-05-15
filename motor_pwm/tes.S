@@ -10,14 +10,19 @@
 ; PC5 = RED Pin LED
 ; PC4 = GREEN Pin LED
 ; PC3 = BLUE Pin LED
-
+; PC2 = BUZZER
+;=============================================================================================
+; MAIN PROGRAM
+;=============================================================================================
 main:
   ; Port D dan B sebagai output
   LDI R21, 0xFF   
   OUT DDRD, R21       ; Menjadikan pin D sebagai output
   OUT DDRB, R21       ; Menjadikan pin B sebagai output
+  
   ; Analog input
   CBI DDRC, 0         ; Menjadikan pin A0 sebagai input analog
+  
   ; Output untuk RGB LED
   SBI DDRC, 5
   SBI DDRC, 4
@@ -38,7 +43,7 @@ INIT_ADC:
     LDI R20, 0xC7     ; Load konstanta 0xC7 ke dalam R20
     STS ADCSRA, R20   ; Mengatur ADCSRA untuk ADC Start Conversion
 RET
-
+;---------------------------------------------------------------------------------------------
 READ_ADC:
     LDS R21, ADCSRA   ; Load nilai dari ADCSRA ke dalam R21 dan cek ADC Interrupt flag
     SBRS R21,4        ; Skip jump bila konversi sudah selesai atau flag sudah set
@@ -59,7 +64,7 @@ READ_ADC:
     SUBI R25, 32
     BRSH LOW_SPEED
     RJMP READ_ADC
-
+;---------------------------------------------------------------------------------------------
 HIGH_SPEED:
     ; Enable Relay 1 and 2
     CBI PORTD, 1
@@ -69,8 +74,13 @@ HIGH_SPEED:
     LDI R16, 200
     RCALL PWM
     
-    RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
+    ;LED
+    SBI PORTC, 5  ; RED
+    CBI PORTC, 4  ; GREEN
+    CBI PORTC, 3  ; BLUE
 
+    RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
+;---------------------------------------------------------------------------------------------
 MEDIUM_SPEED:
     ; Enable Relay 1 and 2
     CBI PORTD, 1
@@ -80,16 +90,26 @@ MEDIUM_SPEED:
     LDI R16, 100
     RCALL PWM
 
-    RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
+    ;LED
+    CBI PORTC, 5  ; RED
+    SBI PORTC, 4  ; GREEN
+    CBI PORTC, 3  ; BLUE
 
+    RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
+;---------------------------------------------------------------------------------------------
 LOW_SPEED:
     ; Enable Relay 1 and 2
-    CBI PORTD, 1
-    CBI PORTD, 2
+    SBI PORTD, 1
+    SBI PORTD, 2
 
     ; PWM Value
     LDI R16, 0
     RCALL PWM
+
+    ;LED
+    CBI PORTC, 5  ; RED
+    CBI PORTC, 4  ; GREEN
+    SBI PORTC, 3  ; BLUE
 
     RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
 ;=============================================================================================
