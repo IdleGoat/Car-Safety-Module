@@ -62,9 +62,10 @@ READ_ADC:
     BRSH LOW_SPEED
     MOV R25, R19
     SUBI R25, 32
-    BRSH LOW_SPEED
+    BRSH STOP
     RJMP READ_ADC
 ;---------------------------------------------------------------------------------------------
+; Kecepatan diatur oleh potensiometer
 HIGH_SPEED:
     ; Enable Relay 1 and 2
     CBI PORTD, 1
@@ -78,6 +79,7 @@ HIGH_SPEED:
 
     RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
 ;---------------------------------------------------------------------------------------------
+; Kecepatan diatur oleh potensiometer
 LOW_SPEED:
     ; Enable Relay 1 and 2
     CBI PORTD, 1
@@ -91,6 +93,7 @@ LOW_SPEED:
   
     RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
 ;---------------------------------------------------------------------------------------------
+; Kecepatan diatur oleh potensiometer ke paling rendah maka berhenti
 STOP:
     ; Enable Relay 1 and 2
     SBI PORTD, 1
@@ -104,6 +107,7 @@ STOP:
     
     RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
 ;---------------------------------------------------------------------------------------------
+; Bila terlalu dekat maka rem mendadak
 STOP_EMERGENCY:
     ; Enable Relay 1 and 2
     SBI PORTD, 1
@@ -117,6 +121,7 @@ STOP_EMERGENCY:
     
     RJMP READ_ADC  ; Kembali ke loop pembacaan ADC
 ;---------------------------------------------------------------------------------------------
+; Bila jarak terlalu dekat
 LOW_SPEED_WARNING_DISTANCE:
     ; Enable Relay 1 and 2
     CBI PORTD, 1
