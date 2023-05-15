@@ -87,7 +87,7 @@ MEDIUM_SPEED:
     CBI PORTD, 2
 
     ; PWM Value
-    LDI R16, 100
+    LDI R16, 20
     RCALL PWM
 
     ;LED
