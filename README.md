@@ -4,6 +4,8 @@
 
 > This program is one of the requirements in fulfilling the task of Cyber Physical System for the Computer Engineering Department at the University of Indonesia.
 
+![](https://hackmd.io/_uploads/HyLGZxbHn.png)
+
 [TOC]
 
 Made By Group B-10
@@ -31,26 +33,30 @@ The module incorporates a responsive emergency brake system that detects imminen
 
 This car safety module offers precise control over the vehicle's throttle response. By integrating with the existing throttle mechanism, drivers can limit the speed or acceleration of their cars, especially in hazardous situations. This feature helps prevent accidents caused by sudden acceleration or excessive speed.
 
+##### Object Detection
+
+The car safety module includes an object detection feature that utilizes an ultrasonic sensor to measure the distance between the vehicle and surrounding objects. The ultrasonic sensor emits high-frequency sound waves and calculates the time it takes for the sound waves to bounce back after hitting an object. By analyzing the distance measurements, the system can identify potential obstacles in the vehicle's path.
+
 ## Hardware Design and Implementation
 
 #### Hardware Specification
 
-This Module consist of 3 Main component, Main Board,  Frame, 
+The Car Safety Module combines certain hardware components to provide robust and reliable safety features. The object detection feature of the module relies on an ultrasonic sensor. This sensor emits high-frequency sound waves and measures the time it takes for the sound waves to bounce back after hitting an object. It enables accurate distance measurements, allowing the module to detect potential obstacles in the vehicle's path and trigger appropriate responses. The module is designed to operate within the vehicle's power supply system. It can be powered directly from the vehicle's battery or through auxiliary power sources.
 
 Component Used
 
-- Relay
+- 2-Channel Relay 
 - Arduino Uno R3 ATmega328P
 - HC-SR04 Ultrasonic Sensor
 - 10K **Ω** Linear Taper Rotary Potentiometer
-- 5V Battery
-- 
+- 9V Battery
+- Breadboard
+- Jumper Cable
+- LED
+- Buzzer
+- MAX7219
 
 #### Hardware Schematics
-
-#### System Architecture
-
-
 
 ## Software Implementation
 
@@ -59,11 +65,19 @@ Component Used
 - [Proteus](https://www.labcenter.com/)
 - [Arduino IDE](https://support.arduino.cc/hc/en-us/articles/360019833020-Download-and-install-Arduino-IDE)
 
-- 
+- [VS Code](https://code.visualstudio.com/)
 
 #### Flowchart
 
+![image-20230516191259069](C:\Users\M S I\AppData\Roaming\Typora\typora-user-images\image-20230516191259069.png)
 
+
+
+This device operates through a sequential process that enables efficient control and safety measures. It begins by reading and storing the Analog to Digital Converter (ADC) value, which serves as a crucial input for subsequent operations. This value is then compared to predefined thresholds to determine the appropriate mode for motor operation, ensuring adaptive performance based on the prevailing conditions.
+
+Once the motor mode is determined, the device sets the motor speed accordingly, allowing drivers to precisely control acceleration and speed. Simultaneously, it continuously collects distance measurements using an ultrasonic sensor. These measurements provide real-time feedback on the proximity of objects, enhancing driver awareness and enabling proactive decision-making.
+
+To effectively transmit the distance measurements, the device utilizes the Serial Peripheral Interface (SPI) protocol to interface with the MAX 7219 display driver. This allows for clear and concise presentation of distance information on the display interface. The entire process, from ADC reading to motor control, distance measurement, and SPI transmission, operates in an iterative manner, ensuring consistent performance and promoting enhanced control and safety on the road.
 
 ## Test Result and Performance Evaluation
 
