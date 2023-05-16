@@ -30,7 +30,6 @@ main:
 loop:
   RCALL HC_SR04_sensor
   RJMP loop
-
 ;===============================================================
 HC_SR04_sensor:
 ;--------------
@@ -79,7 +78,6 @@ l2: IN    R21, TIFR1
     ADD   R28, 17
     OUT   TIFR1, R21      ;clear flag for next sensor reading
     RET
-
 ;=============================================================================================
 ; COMPARE
 ;=============================================================================================
@@ -231,4 +229,142 @@ PWM:
   OUT TCCR0B, R16  
   RET
 
-
+;MAX7219 subroutines
+;===============================================================
+SPI_MAX7219_init:
+;----------------
+.equ  SCK, 5
+.equ  MOSI, 3
+.equ  SS, 2
+;--------------------------------------------------------------
+      LDI   R17, (1<<MOSI)|(1<<SCK)|(1<<SS)
+      OUT   DDRB, R17       ;set MOSI, SCK, SS as o/p
+      ;--------------------------------------------------------
+      LDI   R17, (1<<SPE)|(1<<MSTR)|(1<<SPR0)
+      OUT   SPCR, R17       ;enable SPI as master, fsck=fosc/16
+      ;--------------------------------------------------------
+      LDI   R17, 0x0A       ;set segment intensity (0 to 15)
+      LDI   R18, 8          ;intensity level = 8
+      RCALL send_bytes      ;send command & data to MAX7219
+      ;--------------------------------------------------------
+      LDI   R17, 0x09       ;set decoding mode command
+      LDI   R18, 0b00110000 ;decoding byte
+      RCALL send_bytes      ;send command & data to MAX7219
+      ;--------------------------------------------------------
+      LDI   R17, 0x0B       ;set scan limit command
+      LDI   R18, 0x07       ;8 digits connected to MAX7219
+      RCALL send_bytes      ;send command & data to MAX7219
+      ;--------------------------------------------------------
+      LDI   R17, 0x0C       ;set turn ON/OFF command
+      LDI   R18, 0x01       ;turn ON MAX7219
+      RCALL send_bytes      ;send command & data to MAX7219
+      ;--------------------------------------------------------
+      RET
+;==============================================================
+MAX7219_disp_text:
+;-----------------
+      LDI   R17, 0x08       ;select digit 7
+      LDI   R18, 0x00      ;data = d
+      RCALL send_bytes      ;send command & data to MAX7219
+      ;--------------------------------------------------------
+      LDI   R17, 0x07       ;select digit 6
+      LDI   R18, 0x00       ;data = space
+      RCALL send_bytes      ;send command & data to MAX7219
+      ;--------------------------------------------------------
+      LDI   R17, 0x04       ;select digit 3
+      LDI   R18, 0x00       ;data = space
+      RCALL send_bytes      ;send command & data to MAX7219
+      ;--------------------------------------------------------
+      ; Sending the bytes to MAX 7219 Display
+      LDI   R17, 0x03       ;select digit 2
+      LDI   R18, 0x0D       ;data = c
+      RCALL send_bytes      ;send command & data to MAX7219
+      ;--------------------------------------------------------
+      LDI   R17, 0x02       ;select digit 1
+      LDI   R18, 0b00010101 ;data = (paruh pertama karakter 'm')
+      RCALL send_bytes      ;send command & data to MAX7219
+      ;--------------------------------------------------------
+      LDI   R17, 0x01       ;select digit 0
+      LDI   R18, 0b00010101 ;data = (paruh kedua karakter 'm')
+      RCALL send_bytes      ;send command & data to MAX7219
+      ;--------------------------------------------------------
+      RET
+;==============================================================
+send_bytes:
+      CBI   PORTB, SS       ;enable slave device MAX7219
+      OUT   SPDR, R17       ;transmit command
+      ;--------------------------------------------------------
+ll2:  IN    R19, SPSR
+      SBRS  R19, SPIF       ;wait for byte transmission
+      RJMP  ll2             ;to complete
+      ;--------------------------------------------------------
+      OUT   SPDR, R18       ;transmit data
+      ;--------------------------------------------------------
+ll3:  IN    R19, SPSR
+      SBRS  R19, SPIF       ;wait for byte transmission
+      RJMP  ll3             ;to complete
+      ;--------------------------------------------------------
+      SBI   PORTB, SS       ;disable slave device MAX7219
+      RET
+;==============================================================
+byte2decimal:
+;------------
+      CLR   R26             ;set counter1, initial value 0
+      CLR   R27             ;set counter2, initial value 0
+      ;--------------------------------------------------------
+l70:  CPI   R28, 100        ;compare R28 with 100
+Ret:  BRMI  l80             ;jump when R28 < 100
+      INC   R26             ;increment counter1 by 1
+      SUBI  R28, 100        ;R28 = R28 - 100
+      RJMP  l70
+      ;--------------------------------------------------------
+l80:  CPI   R28, 10         ;compare R28 with 10
+      BRMI  dsp             ;jump when R28 < 10
+      INC   R27             ;increment counter2 by 1
+      SUBI  R28, 10         ;R28 = R28 - 10
+      RJMP  l80
+      ;--------------------------------------------------------  
+dsp:  MOV   R18, R27
+      LDI   R17, 0x06       ;select digit 5 for MSD
+      RCALL send_bytes      ;send command & data to MAX7219
+      ;--------------------------------------------------------
+      MOV   R18, R28
+      LDI   R17, 0x05       ;select digit 4 for LSD
+      RCALL send_bytes      ;send command & data to MAX7219    
+      ;--------------------------------------------------------
+      RET
+;===============================================================
+;delay subroutines
+;===============================================================
+delay_timer0:             ;10 usec delay via Timer 0
+;------------
+    CLR   R20
+    OUT   TCNT0, R20      ;initialize timer0 with count=0
+    LDI   R20, 20
+    OUT   OCR0A, R20      ;OCR0 = 20
+    LDI   R20, 0b00001010
+    OUT   TCCR0B, R20     ;timer0: CTC mode, prescaler 8
+    ;-----------------------------------------------------------
+l0: IN    R20, TIFR0      ;get TIFR0 byte & check
+    SBRS  R20, OCF0A      ;if OCF0=1, skip next instruction
+    RJMP  l0              ;else, loop back & check OCF0 flag
+    ;-----------------------------------------------------------
+    CLR   R20
+    OUT   TCCR0B, R20     ;stop timer0
+    ;-----------------------------------------------------------
+    LDI   R20, (1<<OCF0A)
+    OUT   TIFR0, R20      ;clear OCF0 flag
+    RET
+;===============================================================
+delay_ms:
+;--------
+    LDI   R21, 255
+l6: LDI   R22, 255
+l7: LDI   R23, 50
+l8: DEC   R23
+    BRNE  l8
+    DEC   R22
+    BRNE  l7
+    DEC   R21
+    BRNE  l6
+    RET
