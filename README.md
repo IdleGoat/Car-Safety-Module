@@ -48,7 +48,7 @@ Component Used
 - 2-Channel Relay 
 - Arduino Uno R3 ATmega328P
 - HC-SR04 Ultrasonic Sensor
-- 10K **Ω** Linear Taper Rotary Potentiometer
+- Variable Resistor
 - 9V Battery
 - Breadboard
 - Jumper Cable
@@ -57,6 +57,10 @@ Component Used
 - MAX7219
 
 #### Hardware Schematics
+
+![](https://hackmd.io/_uploads/ryonZEWB3.jpg)
+
+The Proteus schematic is significantly simpler than the actual circuit. It uses an 8-digit 7-segment display with common cathode configuration, Arduino Uno provided by TheEngineeringProjects library, ultrasonic sensor HC-SR04 provided by TheEngineeringProjects, the IC MAX7219 to translate the output of the data through SPI communication from the Arduino to the seven segment display (IC is native to Proteus), a couple of DC motors, buzzer (native to Proteus), three LEDs varying from RGB spectrum (native to Proteus), and a couple of potentiometer native to Proteus. The schematic utilizes two DC motors to represent the base front moving wheels of the car in the actual circuit. The DC motors are connected directly to the PD1 and PD2 pin of the Arduino, bypassing any relays required in the actual circuit. There is a potentiometer plugged into the Test Pin to simulate the varying distance of an object. Another potentiometer is connected PC0 as analog input to control the speed of the DC motors.
 
 ## Software Implementation
 
@@ -81,3 +85,9 @@ To effectively transmit the distance measurements, the device utilizes the Seria
 
 ## Test Result and Performance Evaluation
 
+| Parameter                                                    | Status  |
+| ------------------------------------------------------------ | ------- |
+| Adjust wheel speed using ADC module for precise control      | SUCCESS |
+| Detect distance < 30 cm to trigger automatic braking         | SUCCESS |
+| LED and buzzer signal upon distance-based braking activation | SUCCESS |
+| Smooth and precise throttle control with ADC module and potentiometer | SUCCESS |
